@@ -1,13 +1,18 @@
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
-  ManyToOne,
   CreateDateColumn,
+  Entity,
+  Index,
+  ManyToOne,
+  PrimaryGeneratedColumn,
 } from 'typeorm';
 import { User } from './user.entity.js';
 
 @Entity('watchlist_items')
+@Index('IDX_watchlist_user_tmdb_media', ['userId', 'tmdbId', 'mediaType'], {
+  unique: true,
+})
+@Index('IDX_watchlist_user', ['userId'])
 export class WatchlistItem {
   @PrimaryGeneratedColumn('uuid')
   id: string;

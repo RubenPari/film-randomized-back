@@ -1,45 +1,52 @@
 import {
-  Controller,
-  Get,
-  Post,
-  Delete,
   Body,
-  Param,
-  UseGuards,
-  Request,
+  Controller,
+  Delete,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
   ParseIntPipe,
+  Post,
+  UseGuards,
 } from '@nestjs/common';
-import { WatchlistService } from './watchlist.service.js';
+import { AuthGuard } from '@nestjs/passport';
+import { CurrentUser } from '../auth/decorators/current-user.decorator.js';
+import type { AuthenticatedUser } from '../auth/types/authenticated-user.js';
 import { CreateWatchlistDto } from './dto/create-watchlist.dto.js';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
+import { WatchlistService } from './watchlist.service.js';
 
 @Controller('watchlist')
-@UseGuards(JwtAuthGuard)
+@UseGuards(AuthGuard('jwt'))
 export class WatchlistController {
   constructor(private readonly watchlistService: WatchlistService) {}
 
   @Post()
   @HttpCode(HttpStatus.OK)
-  async create(@Request() req: any, @Body() dto: CreateWatchlistDto) {
-    return this.watchlistService.create(req.user.id, dto);
+  async create(@CurrentUser() user: AuthenticatedUser, @Body() dto: CreateWatchlistDto) {
+    return this.watchlistService.create(user.id, dto);
   }
 
   @Get()
-  async findAll(@Request() req: any) {
-    return this.watchlistService.findAll(req.user.id);
+  async findAll(@CurrentUser() user: AuthenticatedUser) {
+    return this.watchlistService.findAll(user.id);
   }
 
   @Get(':tmdbId')
-  async findOne(@Param('tmdbId', ParseIntPipe) tmdbId: number, @Request() req: any) {
-    return this.watchlistService.findOneByTmdbId(tmdbId, req.user.id);
+  async findOne(
+    @Param('tmdbId', ParseIntPipe) tmdbId: number,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    return this.watchlistService.findOneByTmdbId(tmdbId, user.id);
   }
 
   @Delete(':tmdbId')
   @HttpCode(HttpStatus.OK)
-  async remove(@Param('tmdbId', ParseIntPipe) tmdbId: number, @Request() req: any) {
-    await this.watchlistService.remove(tmdbId, req.user.id);
+  async remove(
+    @Param('tmdbId', ParseIntPipe) tmdbId: number,
+    @CurrentUser() user: AuthenticatedUser,
+  ) {
+    await this.watchlistService.remove(tmdbId, user.id);
     return { message: 'Item removed from watchlist' };
   }
 }
